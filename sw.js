@@ -2,13 +2,25 @@
 // SERVICE WORKER – Cache offline + Notifications
 // =============================================
 
-const CACHE = 'fitness-v1';
-const ASSETS = ['/', '/index.html', '/styles.css', '/app.js', '/data.js', '/manifest.json'];
+const CACHE = 'fitness-v2';
+const ASSETS = [
+  './',
+  './index.html',
+  './styles.css',
+  './app.js',
+  './data.js',
+  './manifest.json',
+  './icons/icon-192.png',
+  './icons/icon-512.png',
+];
 
 // Install: cache all assets
 self.addEventListener('install', e => {
   e.waitUntil(
-    caches.open(CACHE).then(c => c.addAll(ASSETS)).then(() => self.skipWaiting())
+    caches.open(CACHE)
+      .then(c => c.addAll(ASSETS))
+      .then(() => self.skipWaiting())
+      .catch(err => { console.warn('Cache install error:', err); self.skipWaiting(); })
   );
 });
 
@@ -72,8 +84,8 @@ function scheduleAll() {
 function showNotif(title, body) {
   self.registration.showNotification(title, {
     body,
-    icon: '/icons/icon-192.png',
-    badge: '/icons/icon-192.png',
+    icon: './icons/icon-192.png',
+    badge: './icons/icon-192.png',
     vibrate: [100, 50, 100],
   });
 }
