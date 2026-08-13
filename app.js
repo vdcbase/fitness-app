@@ -268,23 +268,59 @@ function renderProfile() {
 }
 
 // ---------- NOTIFICATIONS ----------
+function isIOS() {
+  return /iPad|iPhone|iPod/.test(navigator.userAgent);
+}
+
+function iOSVersion() {
+  const m = navigator.userAgent.match(/OS (\d+)_/);
+  return m ? parseInt(m[1]) : 0;
+}
+
+function isStandalone() {
+  return window.navigator.standalone === true;
+}
+
 function requestNotifications() {
-  if (!('Notification' in window)) {
-    document.getElementById('notif-status').textContent = '❌ Trình duyệt không hỗ trợ';
+  const el = document.getElementById('notif-status');
+
+  // Chưa mở từ icon màn hình chính
+  if (isIOS() && !isStandalone()) {
+    el.textContent = '⚠️ Hãy mở app từ icon trên màn hình chính, không mở từ Safari';
     return;
   }
+
+  // iOS quá cũ (< 16.4)
+  if (isIOS() && iOSVersion() < 16) {
+    el.textContent = '⚠️ Cần iOS 16.4 trở lên. iPhone của bạn đang dùng iOS ' + iOSVersion();
+    showAlarmFallback();
+    return;
+  }
+
+  // Trình duyệt không hỗ trợ (Android Chrome cũ...)
+  if (!('Notification' in window)) {
+    el.textContent = '❌ Trình duyệt không hỗ trợ – thử dùng Safari';
+    showAlarmFallback();
+    return;
+  }
+
   Notification.requestPermission().then(perm => {
     if (perm === 'granted') {
-      scheduleNotifications();
-      document.getElementById('notif-status').textContent = '✅ Đã bật thông báo!';
+      el.textContent = '✅ Đã bật thông báo!';
+      // Gửi thông báo test ngay
+      new Notification('🌟 Thể Dục Hàng Ngày', {
+        body: 'Thông báo đã bật! Mở app mỗi sáng để nhận nhắc nhở.',
+        icon: './icons/icon-192.png'
+      });
       if ('serviceWorker' in navigator) {
         navigator.serviceWorker.ready.then(reg => {
-          reg.active.postMessage({ type: 'SCHEDULE_NOTIFS' });
+          reg.active?.postMessage({ type: 'SCHEDULE_NOTIFS' });
         });
       }
+    } else if (perm === 'denied') {
+      el.textContent = '🚫 Đã từ chối – vào Cài đặt → Thể Dục → Thông báo để bật lại';
     } else {
-      document.getElementById('notif-status').textContent =
-        '⚠️ Cần bật trong Cài đặt Safari → Thông báo';
+      el.textContent = '⚠️ Chưa cấp quyền thông báo';
     }
   });
 }
@@ -292,21 +328,41 @@ function requestNotifications() {
 function checkNotifStatus() {
   const el = document.getElementById('notif-status');
   if (!el) return;
-  if (!('Notification' in window)) {
-    el.textContent = '❌ Trình duyệt không hỗ trợ thông báo';
+
+  if (isIOS() && !isStandalone()) {
+    el.textContent = '⚠️ Mở từ icon màn hình chính để dùng thông báo';
+  } else if (!('Notification' in window)) {
+    el.textContent = isIOS()
+      ? '⚠️ Cần iOS 16.4+ để dùng thông báo PWA'
+      : '❌ Trình duyệt không hỗ trợ thông báo';
+    showAlarmFallback();
   } else if (Notification.permission === 'granted') {
     el.textContent = '✅ Thông báo đã được bật';
   } else if (Notification.permission === 'denied') {
-    el.textContent = '🚫 Đã từ chối – vào Cài đặt Safari để bật lại';
+    el.textContent = '🚫 Đã từ chối – vào Cài đặt để bật lại';
+    showAlarmFallback();
   }
 }
 
-function scheduleNotifications() {
-  // Gửi ngay một thông báo test
-  new Notification('🌟 Thể Dục Hàng Ngày', {
-    body: 'Thông báo đã được bật! App sẽ nhắc bạn mỗi ngày.',
-    icon: 'icons/icon-192.png'
-  });
+function showAlarmFallback() {
+  const card = document.querySelector('.notif-card');
+  if (!card || document.getElementById('alarm-tip')) return;
+  const tip = document.createElement('div');
+  tip.id = 'alarm-tip';
+  tip.style.cssText = 'margin-top:12px;padding:12px;background:#fff9f5;border-radius:10px;border-left:3px solid #f97316';
+  tip.innerHTML = `
+    <p style="font-size:13px;font-weight:600;margin-bottom:6px">📱 Dùng báo thức iPhone thay thế:</p>
+    <p style="font-size:12px;color:#666;line-height:1.6">
+      • 6:30 sáng – Nhắc mở app xem lịch tập<br>
+      • 18:00 T2, T4, T6 – Giờ tập kháng lực<br>
+      • 7:00 sáng T7 – Chuẩn bị chạy bộ<br>
+      • 15:00 T3, T5 – Uống Whey buổi chiều<br>
+      • 22:00 – Nhắc đi ngủ
+    </p>
+    <a href="clock-alarm://" style="display:inline-block;margin-top:8px;font-size:12px;color:#f97316;font-weight:600">
+      ⏰ Mở app Đồng Hồ →
+    </a>`;
+  card.appendChild(tip);
 }
 
 function updateBadge() {
