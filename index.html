@@ -1,0 +1,49 @@
+<!DOCTYPE html>
+<html lang="vi">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover" />
+  <meta name="apple-mobile-web-app-capable" content="yes" />
+  <meta name="apple-mobile-web-app-status-bar-style" content="default" />
+  <meta name="apple-mobile-web-app-title" content="ThểDục" />
+  <meta name="theme-color" content="#f97316" />
+  <link rel="manifest" href="manifest.json" />
+  <link rel="apple-touch-icon" href="icons/icon-192.png" />
+  <link rel="stylesheet" href="styles.css" />
+  <title>Thể Dục Hàng Ngày</title>
+</head>
+<body>
+  <div id="app">
+    <!-- Tab content -->
+    <main id="main-content">
+      <div id="page-today" class="page active"></div>
+      <div id="page-weekly" class="page"></div>
+      <div id="page-profile" class="page"></div>
+    </main>
+
+    <!-- Bottom nav -->
+    <nav class="bottom-nav">
+      <button class="nav-btn active" data-page="today" onclick="navigate('today')">
+        <span class="nav-icon">✅</span>
+        <span>Hôm Nay</span>
+      </button>
+      <button class="nav-btn" data-page="weekly" onclick="navigate('weekly')">
+        <span class="nav-icon">📅</span>
+        <span>Lịch Tuần</span>
+      </button>
+      <button class="nav-btn" data-page="profile" onclick="navigate('profile')">
+        <span class="nav-icon">👤</span>
+        <span>Hồ Sơ</span>
+      </button>
+    </nav>
+  </div>
+
+  <script src="data.js"></script>
+  <script src="app.js"></script>
+  <script>
+    if ('serviceWorker' in navigator) {
+      navigator.serviceWorker.register('sw.js');
+    }
+  </script>
+</body>
+</html>
