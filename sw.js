@@ -2,7 +2,7 @@
 // SERVICE WORKER – Cache offline + Notifications
 // =============================================
 
-const CACHE = 'fitness-v2';
+const CACHE = 'fitness-v3';
 const ASSETS = [
   './',
   './index.html',
@@ -33,11 +33,30 @@ self.addEventListener('activate', e => {
   );
 });
 
-// Fetch: cache-first strategy
+// Fetch: network-first cho HTML/JS/CSS (luôn lấy bản mới nhất),
+// cache-first cho ảnh và tài nguyên tĩnh khác.
 self.addEventListener('fetch', e => {
-  e.respondWith(
-    caches.match(e.request).then(cached => cached || fetch(e.request))
-  );
+  if (e.request.method !== 'GET') return;
+
+  const url = e.request.url;
+  const isCode = e.request.mode === 'navigate' ||
+                 /\.(html|js|css|json)(\?|$)/.test(url);
+
+  if (isCode) {
+    e.respondWith(
+      fetch(e.request)
+        .then(res => {
+          const copy = res.clone();
+          caches.open(CACHE).then(c => c.put(e.request, copy));
+          return res;
+        })
+        .catch(() => caches.match(e.request).then(c => c || caches.match('./index.html')))
+    );
+  } else {
+    e.respondWith(
+      caches.match(e.request).then(cached => cached || fetch(e.request))
+    );
+  }
 });
 
 // Message from app
