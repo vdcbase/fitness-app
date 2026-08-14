@@ -11,8 +11,37 @@
   <link rel="apple-touch-icon" href="icons/icon-192.png" />
   <link rel="stylesheet" href="styles.css" />
   <title>Thể Dục Hàng Ngày</title>
+  <style>
+    /* Splash hiển thị ngay lập tức, trước cả khi styles.css tải xong */
+    #splash {
+      position: fixed; inset: 0; z-index: 9999;
+      display: flex; flex-direction: column;
+      align-items: center; justify-content: center; gap: 16px;
+      background: #f97316;
+      transition: opacity .25s ease;
+    }
+    #splash.hide { opacity: 0; pointer-events: none; }
+    #splash .logo { font-size: 64px; }
+    #splash .name {
+      color: #fff; font-size: 17px; font-weight: 600;
+      font-family: -apple-system, BlinkMacSystemFont, sans-serif;
+    }
+    #splash .spinner {
+      width: 22px; height: 22px; border-radius: 50%;
+      border: 2.5px solid rgba(255,255,255,.35);
+      border-top-color: #fff;
+      animation: spin .7s linear infinite;
+    }
+    @keyframes spin { to { transform: rotate(360deg); } }
+  </style>
 </head>
 <body>
+  <div id="splash">
+    <span class="logo">💪</span>
+    <span class="name">Thể Dục Hàng Ngày</span>
+    <span class="spinner"></span>
+  </div>
+
   <div id="app">
     <!-- Tab content -->
     <main id="main-content">
@@ -41,8 +70,24 @@
   <script src="data.js"></script>
   <script src="app.js"></script>
   <script>
+    // Ẩn splash ngay khi nội dung đã render
+    (function () {
+      var splash = document.getElementById('splash');
+      function hide() {
+        splash.classList.add('hide');
+        setTimeout(function () { splash.remove(); }, 250);
+      }
+      if (document.readyState === 'complete') hide();
+      else window.addEventListener('load', hide);
+      // Fallback: không để splash kẹt quá 2.5s
+      setTimeout(hide, 2500);
+    })();
+
+    // Đăng ký service worker sau khi app đã hiện, tránh chặn lần mở đầu
     if ('serviceWorker' in navigator) {
-      navigator.serviceWorker.register('sw.js');
+      window.addEventListener('load', function () {
+        navigator.serviceWorker.register('sw.js');
+      });
     }
   </script>
 </body>
